@@ -110,7 +110,78 @@ Le rapport est écrit dans `reports/reports.txt`. Pour tout enchaîner : `./scri
 
 ## Résultats
 
-(Coller ici un extrait de `reports/reports.txt`.)
+(extrait)
+
+SPORTS SALES DATA PIPELINE - ANALYTICS REPORT
+Genere le 2026-11-04 21:31:35
+======================================================================
+
+NOTES
+  - Les montants sont bruts, avant remise (total_amount = somme prix x quantite).
+  - Les devises ne sont pas converties : ne comparez pas des montants de devises differentes.
+  - store_id n'identifie pas un magasin physique : un magasin = (store_id, nom, pays, ville, type).
+
+======================================================================
+1. STORE SALES ANALYSIS (store_sales_summary)
+======================================================================
+
+[store_1] Top 5 des magasins par chiffre d'affaires (devises locales)
+store_id | store_name       | store_country | store_city  | total_sales_amount
+---------+------------------+---------------+-------------+-------------------
+STR6060  | Champion Gear    | United States | Los Angeles | 4,200.00          
+STR3926  | Pro Fitness      | Italy         | Naples      | 4,029.00          
+STR6770  | Active Life      | Netherlands   | Utrecht     | 3,800.00          
+STR3429  | Pro Fitness      | Japan         | Tokyo       | 3,780.00          
+STR2758  | Athlete's Corner | France        | Nice        | 3,780.00          
+
+[store_2] Ville avec le chiffre d'affaires cumule le plus eleve
+store_city | store_country | total_sales
+-----------+---------------+------------
+Eindhoven  | Netherlands   | 308,493.50 
+
+[store_3] Nombre de magasins par pays
+store_country        | nb_magasins_combinaisons | nb_store_id_distincts
+---------------------+--------------------------+----------------------
+Mexico               | 1709                     | 1571                 
+Netherlands          | 1698                     | 1551                 
+India                | 1696                     | 1546                 
+South Korea          | 1695                     | 1551                 
+France               | 1680                     | 1521                 
+China                | 1679                     | 1539                 
+Vietnam              | 1674                     | 1534                 
+United Arab Emirates | 1671                     | 1520                 
+Spain                | 1665                     | 1516                 
+Germany              | 1663                     | 1520                 
+United States        | 1663                     | 1500                 
+Japan                | 1658                     | 1505                 
+Saudi Arabia         | 1651                     | 1512                 
+United Kingdom       | 1649                     | 1504                 
+Italy                | 1639                     | 1508                 
+Thailand             | 1627                     | 1495                 
+Canada               | 1616                     | 1472                 
+Indonesia            | 1597                     | 1450                 
+
+[store_4] Quantite totale de produits vendus par pays
+store_country        | total_quantity
+---------------------+---------------
+South Korea          | 10440         
+Mexico               | 10315         
+United Arab Emirates | 10246         
+France               | 10174         
+Netherlands          | 10162         
+Saudi Arabia         | 10162         
+Vietnam              | 10134         
+Japan                | 10117         
+China                | 10087         
+India                | 10038         
+Spain                | 9978          
+United States        | 9865          
+Germany              | 9841          
+Canada               | 9766          
+Thailand             | 9750          
+Italy                | 9733          
+United Kingdom       | 9706          
+Indonesia            | 9577          
 
 ## Pistes d'amélioration
 
