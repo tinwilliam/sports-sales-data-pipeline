@@ -1,0 +1,125 @@
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.10.5
+  user: "${AIRFLOW_UID:-50000}:0"
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AF_DB_PASSWORD}@postgres_airflow/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
+    # Connexion créée automatiquement : conn_id = sports_postgres
+    AIRFLOW_CONN_SPORTS_POSTGRES: postgresql://${DW_USER}:${DW_PASSWORD}@postgres_dw:5432/${DW_DB}
+    # Variables lues par scripts/load_json.py (réseau interne Docker : port 5432)
+    PYTHONPATH: /opt/airflow/scripts
+    DB_HOST: postgres_dw
+    DB_PORT: "5432"
+    DW_DB: ${DW_DB}
+    DW_USER: ${DW_USER}
+    DW_PASSWORD: ${DW_PASSWORD}
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./scripts:/opt/airflow/scripts
+    - ./sql:/opt/airflow/sql
+    - ./data:/opt/airflow/data
+    - ./reports:/opt/airflow/reports
+    - ./logs:/opt/airflow/logs
+  depends_on: &airflow-common-depends-on
+    postgres_airflow:
+      condition: service_healthy
+    postgres_dw:
+      condition: service_healthy
+
+services:
+  # --- Base métier (entrepôt) ---
+  postgres_dw:
+    image: postgres:16
+    container_name: sports_dw
+    environment:
+      POSTGRES_USER: ${DW_USER}
+      POSTGRES_PASSWORD: ${DW_PASSWORD}
+      POSTGRES_DB: ${DW_DB}
+    ports:
+      - "5434:5432"
+    volumes:
+      - dw-data:/var/lib/postgresql/data
+      - ./sql/ddl:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DW_USER} -d ${DW_DB}"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # --- Métadonnées Airflow (non exposée) ---
+  postgres_airflow:
+    image: postgres:16
+    container_name: sports_airflow_meta
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${AF_DB_PASSWORD}
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-meta-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow", "-d", "airflow"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # --- Initialisation : migration de la base + création de l'admin ---
+  airflow-init:
+    <<: *airflow-common
+    container_name: sports_airflow_init
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USER}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: sports_airflow_web
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: sports_airflow_scheduler
+    command: scheduler
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres_dw:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  dw-data:
+  airflow-meta-data:
+  pgadmin-data:

@@ -1,0 +1,16 @@
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Airflow / sorties générées
+logs/
+#reports/*.txt
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Stores
