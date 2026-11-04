@@ -42,6 +42,11 @@ Le DAG Airflow `sports_sales_pipeline` enchaîne :
 
 ## Technologies
 
+
+<p align="center">
+  <img src="docs/images/0_stack_technique.png" alt="Tâches du DAG" width="600">
+</p>
+
 | Outil | Rôle |
 |---|---|
 | Python 3 + psycopg2 | Lecture du JSON, explosion de `products[]`, chargement |
